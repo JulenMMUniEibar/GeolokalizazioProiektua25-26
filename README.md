@@ -1,0 +1,2 @@
+# GeolokalizazioProiektua25-26
+Geolokalizazioa ikasgairako proeiktua
