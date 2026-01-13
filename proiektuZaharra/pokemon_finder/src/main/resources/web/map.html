@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    html, body { height: 100%; width: 100%; margin: 0; overflow: hidden; }
+    #map { height: 100%; width: 100%; background: #ddd; }
+    .popup { display: flex; gap: 10px; align-items: center; font-family: Arial, sans-serif; font-size: 13px; }
+    .popup img { width: 56px; height: 56px; image-rendering: pixelated; }
+    .popup .t { font-weight: bold; text-transform: capitalize; }
+    .popup .s { color: #555; }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+
+  <script>
+    // --- MAPA ---
+    const _map = L.map('map', {
+      zoomAnimation: false,
+      fadeAnimation: false,
+      markerZoomAnimation: false,
+      inertia: false,
+      preferCanvas: true
+    }).setView([43.2630, -2.9350], 12);
+
+    // ✅ MUY IMPORTANTE: exponer el mapa en window para que Java pueda usarlo sin problemas
+    window._map = _map;
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      keepBuffer: 8,
+      updateWhenZooming: false,
+      updateWhenIdle: true
+    }).addTo(_map);
+
+    const markersLayer = L.layerGroup().addTo(_map);
+
+    // --- FUNCIONES QUE JAVA LLAMA ---
+    window.clearMarkers = function () {
+      markersLayer.clearLayers();
+    };
+
+    window.addSightingMarker = function (lat, lon, popupHtml) {
+      const m = L.marker([lat, lon]).addTo(markersLayer);
+      m.bindPopup(popupHtml);
+      return true;
+    };
+
+    window.setCenter = function (lat, lon, zoom) {
+      _map.setView([lat, lon], zoom || _map.getZoom());
+    };
+
+    // --- FIX TAMAÑO (JavaFX WebView) ---
+    window.fixLeaflet = function () {
+      setTimeout(() => _map.invalidateSize(false), 200);
+    };
+
+    // Se recalcula cuando hay zoom/move/resize
+    _map.on('zoomend', window.fixLeaflet);
+    _map.on('moveend', window.fixLeaflet);
+    window.addEventListener('resize', window.fixLeaflet);
+
+    // --- CLICK: se engancha cuando Java ya ha puesto window.app ---
+    window.bindJavaBridge = function () {
+      if (window._bridgeBound) return;
+      window._bridgeBound = true;
+
+      _map.on('click', function (e) {
+        if (window.app && typeof window.app.onMapClick === 'function') {
+          window.app.onMapClick(e.latlng.lat, e.latlng.lng);
+        }
+      });
+    };
+
+    // Primera corrección al cargar
+    setTimeout(window.fixLeaflet, 500);
+  </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>PokéMap - Avistamientos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; display:flex; height:100vh; }
+    #left { width:360px; padding:16px; border-right:1px solid #ddd; box-sizing:border-box; overflow:auto; }
+    #map { flex:1; }
+    input, textarea, button { width:100%; margin:6px 0; padding:10px; box-sizing:border-box; }
+    .row { display:flex; gap:8px; }
+    .row input { width:50%; }
+    small { color:#666; }
+    .btnrow { display:flex; gap:8px; }
+    .btnrow button { width:50%; }
+  </style>
+</head>
+<body>
+  <div id="left">
+    <h2>Añadir avistamiento</h2>
+    <input id="pokemon" placeholder="pikachu o 25">
+    <textarea id="note" placeholder="Nota (opcional)"></textarea>
+    <div class="row">
+      <input id="lat" placeholder="Lat" readonly>
+      <input id="lon" placeholder="Lon" readonly>
+    </div>
+    <small>Haz click en el mapa para elegir ubicación</small>
+    <button id="save">Guardar avistamiento</button>
+
+    <hr>
+
+    <h3>Filtro</h3>
+    <input id="filter" placeholder="pikachu (vacío = todos)">
+    <div class="btnrow">
+      <button id="apply">Aplicar</button>
+      <button id="all">Ver todos</button>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <script>
+    const API = "/api/sightings";
+    const map = L.map('map').setView([43.2630, -2.9350], 12);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+    const markers = L.layerGroup().addTo(map);
+    let selected = null;
+
+    function escapeHtml(s){
+      return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+
+    function popupHtml(s){
+      const img = s.spriteUrl ? `<img src="${s.spriteUrl}" style="width:56px;height:56px;image-rendering:pixelated">` : "";
+      const when = new Date(s.timestamp).toISOString();
+      return `<div style="display:flex;gap:10px;align-items:center">
+        ${img}
+        <div>
+          <div><b>${escapeHtml(s.pokemonName)}</b> (#${s.pokemonId})</div>
+          <div style="color:#555">${escapeHtml(when)}</div>
+          <div style="color:#555">${escapeHtml(s.note||"")}</div>
+        </div>
+      </div>`;
+    }
+
+    function render(list){
+      markers.clearLayers();
+      list.forEach(s => {
+        L.marker([s.lat, s.lon]).addTo(markers).bindPopup(popupHtml(s));
+      });
+    }
+
+    async function loadAll(){
+      const res = await fetch(API);
+      render(await res.json());
+    }
+
+    async function loadFilter(name){
+      const res = await fetch(`${API}?pokemon=${encodeURIComponent(name)}`);
+      render(await res.json());
+    }
+
+    map.on('click', (e) => {
+      selected = e.latlng;
+      document.getElementById('lat').value = selected.lat.toFixed(6);
+      document.getElementById('lon').value = selected.lng.toFixed(6);
+    });
+
+    document.getElementById('save').onclick = async () => {
+      const key = document.getElementById('pokemon').value.trim();
+      if(!key) return alert("Pon un Pokémon (nombre o id)");
+      if(!selected) return alert("Haz click en el mapa para elegir ubicación");
+
+      const body = {
+        pokemon: key,
+        lat: selected.lat,
+        lon: selected.lng,
+        note: document.getElementById('note').value.trim()
+      };
+
+      const res = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify(body)
+      });
+
+      if(!res.ok){
+        const msg = await res.text();
+        return alert("Error: " + msg);
+      }
+
+      document.getElementById('pokemon').value = "";
+      document.getElementById('note').value = "";
+      await loadAll();
+    };
+
+    document.getElementById('apply').onclick = async () => {
+      const f = document.getElementById('filter').value.trim().toLowerCase();
+      if(!f) return loadAll();
+      await loadFilter(f);
+    };
+
+    document.getElementById('all').onclick = loadAll;
+
+    loadAll();
+  </script>
+</body>
+</html>

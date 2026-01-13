@@ -1,0 +1,6 @@
+com.pokemap
+com.pokemap.controller
+com.pokemap.dto
+com.pokemap.model
+com.pokemap.repo
+com.pokemap.service

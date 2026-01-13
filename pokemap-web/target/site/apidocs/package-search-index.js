@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.pokemap"},{"l":"com.pokemap.controller"},{"l":"com.pokemap.dto"},{"l":"com.pokemap.model"},{"l":"com.pokemap.repo"},{"l":"com.pokemap.service"}];updateSearchResults();

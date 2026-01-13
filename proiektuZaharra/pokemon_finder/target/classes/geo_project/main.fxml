@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+    xmlns:fx="http://javafx.com/fxml"
+    fx:controller="geo_project.controller.MainController">
+
+    <left>
+        <VBox spacing="10" prefWidth="320" style="-fx-padding: 12;">
+            <Label text="Añadir avistamiento" style="-fx-font-size: 16; -fx-font-weight: bold;" />
+
+            <Label text="Pokémon (nombre o id)" />
+            <TextField fx:id="pokemonField" promptText="pikachu o 25" />
+
+            <Label text="Nota (opcional)" />
+            <TextArea fx:id="noteArea" promptText="Ej: visto cerca del parque" prefRowCount="3" />
+
+            <HBox spacing="10">
+                <VBox>
+                    <Label text="Lat" />
+                    <TextField fx:id="latField" editable="false" />
+                </VBox>
+                <VBox>
+                    <Label text="Lon" />
+                    <TextField fx:id="lonField" editable="false" />
+                </VBox>
+            </HBox>
+
+            <Label text="(Click en el mapa para elegir ubicación)" style="-fx-text-fill: #666;" />
+
+            <Button text="Guardar avistamiento" onAction="#onSave" />
+
+            <Separator />
+
+            <Label text="Filtro" style="-fx-font-size: 14; -fx-font-weight: bold;" />
+            <TextField fx:id="filterField" promptText="Ej: pikachu (vacío = todos)" />
+            <HBox spacing="10">
+                <Button text="Aplicar filtro" onAction="#onApplyFilter" />
+                <Button text="Ver todos" onAction="#onShowAll" />
+            </HBox>
+
+            <Separator />
+
+            <Label text="Avistamientos (últimos)" style="-fx-font-size: 14; -fx-font-weight: bold;" />
+            <ListView fx:id="sightingsList" prefHeight="300" />
+        </VBox>
+    </left>
+
+    <center>
+        <AnchorPane>
+            <WebView fx:id="webView"
+                AnchorPane.topAnchor="0.0"
+                AnchorPane.rightAnchor="0.0"
+                AnchorPane.bottomAnchor="0.0"
+                AnchorPane.leftAnchor="0.0" />
+        </AnchorPane>
+    </center>
+
+</BorderPane>
